@@ -51,3 +51,42 @@ public class CalculatorGUI {
         frame.setVisible(true);
     }
 
+    private class ButtonClickListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            String command = e.getActionCommand();
+
+            if (command.charAt(0) >= '0' && command.charAt(0) <= '9') {
+                display.setText(display.getText() + command);
+            }
+            else if (command.equals("C")) {
+                display.setText("");
+                num1 = 0;
+                operator = "";
+            }
+            else if (command.equals("=")) {
+                double num2 = Double.parseDouble(display.getText());
+                double result = 0;
+
+
+                if (operator.equals("+")) {
+                    result = myCalc.add(num1, num2);
+                } else if (operator.equals("-")) {
+                    result = myCalc.subtract(num1, num2);
+                } else if (operator.equals("*")) {
+                    result = myCalc.multiply(num1, num2);
+                } else if (operator.equals("/")) {
+                    result = myCalc.divide(num1, num2);
+                }
+
+                display.setText(String.valueOf(result));
+            }
+            else {
+                if (!display.getText().isEmpty()) {
+                    num1 = Double.parseDouble(display.getText());
+                    operator = command;
+                    display.setText("");
+                }
+            }
+        }
+    }
+}
