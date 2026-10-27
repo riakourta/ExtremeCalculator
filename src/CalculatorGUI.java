@@ -12,7 +12,9 @@ public class CalculatorGUI {
     private JTextField display;
     private double num1 = 0;
     private String operator = "";
-
+    private JComboBox<String> fromCurrency;
+    private JComboBox<String> toCurrency;
+    private JButton convertButton;
     public CalculatorGUI() {
 
         myCalc = new Calculator();
@@ -20,7 +22,7 @@ public class CalculatorGUI {
 
         frame = new JFrame("Our Calc<3");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 400);
+        frame.setSize(300, 450);
         frame.setLayout(new BorderLayout());
 
 
@@ -48,6 +50,23 @@ public class CalculatorGUI {
         }
 
         frame.add(panel, BorderLayout.CENTER);
+
+        //Πάνελ μετατροπέα
+        JPanel converterPanel = new JPanel();
+        converterPanel.setLayout(new FlowLayout());
+
+        String[] currencies = {"EUR", "USD", "GBP", "JPY"};
+        fromCurrency = new JComboBox<>(currencies);
+        toCurrency = new JComboBox<>(currencies);
+
+        convertButton = new JButton("Convert");
+
+        converterPanel.add(fromCurrency);
+        converterPanel.add(toCurrency);
+        converterPanel.add(convertButton);
+
+        frame.add(converterPanel, BorderLayout.SOUTH);
+
         frame.setVisible(true);
     }
 
