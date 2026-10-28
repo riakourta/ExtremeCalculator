@@ -2,10 +2,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ExecutionException;
 
 public class CalculatorGUI {
 
-
+    private CurrencyConverter myConverter;
     private Calculator myCalc;
 
     private JFrame frame;
@@ -18,7 +19,7 @@ public class CalculatorGUI {
     public CalculatorGUI() {
 
         myCalc = new Calculator();
-
+        myConverter = new CurrencyConverter();
 
         frame = new JFrame("Our Calc<3");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -61,6 +62,49 @@ public class CalculatorGUI {
 
         convertButton = new JButton("Convert");
 
+        convertButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(display.getText().isEmpty()){
+                    return;
+                }
+
+                final double amount;
+                try {
+                    amount = Double.parseDouble(display.getText());
+                }catch (NumberFormatException ex) {
+                    display.setText("Error");
+                    return;
+                }
+                final String from =  fromCurrency.getSelectedItem().toString();
+                final String to = toCurrency.getSelectedItem().toString();
+
+                convertButton.setEnabled(false);
+                display.setText("Wait...");
+
+                SwingWorker<Double, Void> worker = new SwingWorker<Double, Void>() {
+                    @Override
+                    protected Double doInBackground() {
+                        return myConverter.convert(amount, from, to);
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            double result = get();
+                            display.setText(String.valueOf(result));
+                        } catch (InterruptedException | ExecutionException ex) {
+                            display.setText("API Error");
+                        } finally {
+                            convertButton.setEnabled(true);
+                        }
+                    }
+                };
+
+                worker.execute();
+            }
+        });
+
         converterPanel.add(fromCurrency);
         converterPanel.add(toCurrency);
         converterPanel.add(convertButton);
@@ -75,6 +119,9 @@ public class CalculatorGUI {
             String command = e.getActionCommand();
 
             if (command.charAt(0) >= '0' && command.charAt(0) <= '9') {
+                if (display.getText().equals("Wait...") || display.getText().equals("Error") || display.getText().equals("API Error")) {
+                    display.setText("");
+                }
                 display.setText(display.getText() + command);
             }
             else if (command.equals("C")) {
