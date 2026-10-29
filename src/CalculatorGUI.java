@@ -85,16 +85,13 @@ public class CalculatorGUI {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                if (display.getText().isEmpty()) {
-                    return;
-                }
 
                 final double amount;
 
                 try {
                     amount = Double.parseDouble(display.getText());
                 } catch (NumberFormatException ex) {
-                    display.setText("Error");
+                    JOptionPane.showMessageDialog(frame, "Μη έγκυρη εισαγωγή", "Σφάλμα", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -119,6 +116,11 @@ public class CalculatorGUI {
                             protected void done() {
                                 try {
                                     double result = get();
+                                    if (result == 0.0) {
+                                        display.setText("");
+                                        JOptionPane.showMessageDialog(frame, "Σφάλμα δικτύου: Αδύνατη η λήψη ισοτιμιών", "Σφάλμα", JOptionPane.ERROR_MESSAGE);
+                                        return;
+                                    }
 
                                     display.setText(String.valueOf(result));
 
@@ -188,8 +190,7 @@ public class CalculatorGUI {
 
             else if (command.equals("=")) {
 
-                if (display.getText().isEmpty() ||
-                        operator.isEmpty()) {
+                if (operator.isEmpty()) {
                     return;
                 }
 
@@ -198,7 +199,7 @@ public class CalculatorGUI {
                 try {
                     num2 = Double.parseDouble(display.getText());
                 } catch (NumberFormatException ex) {
-                    display.setText("Error");
+                    JOptionPane.showMessageDialog(frame, "Μη έγκυρη εισαγωγή", "Σφάλμα", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -214,7 +215,15 @@ public class CalculatorGUI {
                     result = myCalc.multiply(num1, num2);
 
                 } else if (operator.equals("/")) {
-                    result = myCalc.divide(num1, num2);
+                    try {
+                        result = myCalc.divide(num1, num2);
+                    } catch (ArithmeticException ex) {
+                        JOptionPane.showMessageDialog(frame, ex.getMessage(), "Σφάλμα", JOptionPane.ERROR_MESSAGE);
+                        display.setText("");
+                        num1 = 0;
+                        operator = "";
+                        return;
+                    }
                 }
 
                 display.setText(String.valueOf(result));
@@ -232,16 +241,13 @@ public class CalculatorGUI {
             }
 
             else {
-                if (!display.getText().isEmpty()) {
-
-                    try {
-                        num1 = Double.parseDouble(display.getText());
-                        operator = command;
-                        display.setText("");
-
-                    } catch (NumberFormatException ex) {
-                        display.setText("Error");
-                    }
+                try {
+                    num1 = Double.parseDouble(display.getText());
+                    operator = command;
+                    display.setText("");
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(frame, "Μη έγκυρη εισαγωγή", "Σφάλμα", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
             }
         }

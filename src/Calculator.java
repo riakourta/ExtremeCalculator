@@ -19,8 +19,7 @@ public class Calculator {
     public double divide(double a, double b) {
 
         if (b == 0) {
-            System.out.println("Προσοχή: Δεν γίνεται διαίρεση με το μηδέν!");
-            return 0;
+            throw new ArithmeticException("Διαίρεση με το μηδέν");
         }
         return a / b;
     }
