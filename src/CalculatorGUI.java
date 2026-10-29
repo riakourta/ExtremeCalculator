@@ -11,11 +11,15 @@ public class CalculatorGUI {
 
     private JFrame frame;
     private JTextField display;
+    private JTextArea historyArea;
+
     private double num1 = 0;
     private String operator = "";
+
     private JComboBox<String> fromCurrency;
     private JComboBox<String> toCurrency;
     private JButton convertButton;
+
     public CalculatorGUI() {
 
         myCalc = new Calculator();
@@ -23,15 +27,15 @@ public class CalculatorGUI {
 
         frame = new JFrame("Our Calc<3");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 450);
-        frame.setLayout(new BorderLayout());
 
+        // Αυξήθηκε το πλάτος για να χωράει το ιστορικό δεξιά
+        frame.setSize(520, 450);
+        frame.setLayout(new BorderLayout());
 
         display = new JTextField();
         display.setEditable(false);
         display.setFont(new Font(Font.MONOSPACED, Font.BOLD, 24));
         frame.add(display, BorderLayout.NORTH);
-
 
         JPanel panel = new JPanel();
         panel.setLayout(new GridLayout(4, 4));
@@ -52,11 +56,26 @@ public class CalculatorGUI {
 
         frame.add(panel, BorderLayout.CENTER);
 
-        //Πάνελ μετατροπέα
+        // Περιοχή ιστορικού
+        historyArea = new JTextArea(10, 15);
+        historyArea.setEditable(false);
+        historyArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+        historyArea.setLineWrap(true);
+        historyArea.setWrapStyleWord(true);
+
+        JScrollPane scrollPane = new JScrollPane(historyArea);
+        scrollPane.setBorder(
+                BorderFactory.createTitledBorder("History")
+        );
+
+        frame.add(scrollPane, BorderLayout.EAST);
+
+        // Πάνελ μετατροπέα
         JPanel converterPanel = new JPanel();
         converterPanel.setLayout(new FlowLayout());
 
         String[] currencies = {"EUR", "USD", "GBP", "JPY"};
+
         fromCurrency = new JComboBox<>(currencies);
         toCurrency = new JComboBox<>(currencies);
 
@@ -65,41 +84,67 @@ public class CalculatorGUI {
         convertButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(display.getText().isEmpty()){
+
+                if (display.getText().isEmpty()) {
                     return;
                 }
 
                 final double amount;
+
                 try {
                     amount = Double.parseDouble(display.getText());
-                }catch (NumberFormatException ex) {
+                } catch (NumberFormatException ex) {
                     display.setText("Error");
                     return;
                 }
-                final String from =  fromCurrency.getSelectedItem().toString();
-                final String to = toCurrency.getSelectedItem().toString();
+
+                final String from =
+                        fromCurrency.getSelectedItem().toString();
+
+                final String to =
+                        toCurrency.getSelectedItem().toString();
 
                 convertButton.setEnabled(false);
                 display.setText("Wait...");
 
-                SwingWorker<Double, Void> worker = new SwingWorker<Double, Void>() {
-                    @Override
-                    protected Double doInBackground() {
-                        return myConverter.convert(amount, from, to);
-                    }
+                SwingWorker<Double, Void> worker =
+                        new SwingWorker<Double, Void>() {
 
-                    @Override
-                    protected void done() {
-                        try {
-                            double result = get();
-                            display.setText(String.valueOf(result));
-                        } catch (InterruptedException | ExecutionException ex) {
-                            display.setText("API Error");
-                        } finally {
-                            convertButton.setEnabled(true);
-                        }
-                    }
-                };
+                            @Override
+                            protected Double doInBackground() {
+                                return myConverter.convert(amount, from, to);
+                            }
+
+                            @Override
+                            protected void done() {
+                                try {
+                                    double result = get();
+
+                                    display.setText(String.valueOf(result));
+
+                                    // Καταγραφή της μετατροπής στο ιστορικό
+                                    historyArea.append(
+                                            amount + " " + from
+                                                    + " = "
+                                                    + result + " " + to
+                                                    + "\n"
+                                    );
+
+                                    // Μετακίνηση στην τελευταία εγγραφή
+                                    historyArea.setCaretPosition(
+                                            historyArea.getDocument().getLength()
+                                    );
+
+                                } catch (InterruptedException |
+                                         ExecutionException ex) {
+
+                                    display.setText("API Error");
+
+                                } finally {
+                                    convertButton.setEnabled(true);
+                                }
+                            }
+                        };
 
                 worker.execute();
             }
@@ -111,46 +156,92 @@ public class CalculatorGUI {
 
         frame.add(converterPanel, BorderLayout.SOUTH);
 
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
     private class ButtonClickListener implements ActionListener {
+
+        @Override
         public void actionPerformed(ActionEvent e) {
+
             String command = e.getActionCommand();
 
-            if (command.charAt(0) >= '0' && command.charAt(0) <= '9') {
-                if (display.getText().equals("Wait...") || display.getText().equals("Error") || display.getText().equals("API Error")) {
+            if (command.charAt(0) >= '0' &&
+                    command.charAt(0) <= '9') {
+
+                if (display.getText().equals("Wait...") ||
+                        display.getText().equals("Error") ||
+                        display.getText().equals("API Error")) {
+
                     display.setText("");
                 }
+
                 display.setText(display.getText() + command);
             }
+
             else if (command.equals("C")) {
                 display.setText("");
                 num1 = 0;
                 operator = "";
             }
-            else if (command.equals("=")) {
-                double num2 = Double.parseDouble(display.getText());
-                double result = 0;
 
+            else if (command.equals("=")) {
+
+                if (display.getText().isEmpty() ||
+                        operator.isEmpty()) {
+                    return;
+                }
+
+                double num2;
+
+                try {
+                    num2 = Double.parseDouble(display.getText());
+                } catch (NumberFormatException ex) {
+                    display.setText("Error");
+                    return;
+                }
+
+                double result = 0;
 
                 if (operator.equals("+")) {
                     result = myCalc.add(num1, num2);
+
                 } else if (operator.equals("-")) {
                     result = myCalc.subtract(num1, num2);
+
                 } else if (operator.equals("*")) {
                     result = myCalc.multiply(num1, num2);
+
                 } else if (operator.equals("/")) {
                     result = myCalc.divide(num1, num2);
                 }
 
                 display.setText(String.valueOf(result));
+
+                // Καταγραφή της μαθηματικής πράξης
+                historyArea.append(
+                        num1 + " " + operator + " "
+                                + num2 + " = " + result + "\n"
+                );
+
+                // Μετακίνηση στην τελευταία εγγραφή
+                historyArea.setCaretPosition(
+                        historyArea.getDocument().getLength()
+                );
             }
+
             else {
                 if (!display.getText().isEmpty()) {
-                    num1 = Double.parseDouble(display.getText());
-                    operator = command;
-                    display.setText("");
+
+                    try {
+                        num1 = Double.parseDouble(display.getText());
+                        operator = command;
+                        display.setText("");
+
+                    } catch (NumberFormatException ex) {
+                        display.setText("Error");
+                    }
                 }
             }
         }
